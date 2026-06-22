@@ -1,0 +1,10 @@
+flask
+scikit-learn
+pandas
+numpy
+joblib
+matplotlib
+tldextract
+requests
+opencv-python-headless
+gunicorn

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PhishNet — URL Threat Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+          <path d="M12 2L4 5v6c0 5.2 3.4 8.9 8 10.5 4.6-1.6 8-5.3 8-10.5V5l-8-3z" fill="var(--brand-600)"/>
+          <path d="M9 12.3l2.1 2.1L15.5 10" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </span>
+      <span class="brand-name">PhishNet</span>
+    </div>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      Model active
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- HERO / SCAN CARD -->
+  <section class="card scan-card">
+    <div class="scan-card-head">
+      <h1>Scan a URL for phishing risk</h1>
+      <p>Checks structure, domain reputation, and known threat databases in real time.</p>
+    </div>
+
+    <div class="scan-form">
+      <div class="scan-input-wrap">
+        <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input
+          type="text"
+          id="urlInput"
+          placeholder="Paste a URL, e.g. https://example.com/login"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <button id="scanBtn" onclick="runScan()">
+        <span id="scanBtnLabel">Scan URL</span>
+        <span id="scanBtnLoader" class="loader hidden"></span>
+      </button>
+    </div>
+
+    <div class="qr-row">
+      <span class="qr-divider"><span>or</span></span>
+      <label class="qr-upload-btn" id="qrUploadBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+          <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+          <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M14 14h3v3M14 21h7v-4M21 14v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Scan a QR code image
+        <input type="file" id="qrFileInput" accept="image/*" onchange="runQRScan(event)" hidden />
+      </label>
+      <span id="qrFileName" class="qr-filename"></span>
+    </div>
+
+    <div class="examples-row">
+      <span class="examples-label">Try an example</span>
+      <button class="example-chip" onclick="setURL('https://www.google.com')">
+        <span class="dot dot-safe"></span>google.com
+      </button>
+      <button class="example-chip" onclick="setURL('http://192.168.1.1/sbi-login/verify')">
+        <span class="dot dot-risk"></span>IP-based login link
+      </button>
+      <button class="example-chip" onclick="setURL('http://paypal-secure-verify.tk/account/login')">
+        <span class="dot dot-risk"></span>fake-paypal.tk
+      </button>
+    </div>
+
+    <div class="scan-error hidden" id="scanError"></div>
+  </section>
+
+  <!-- RESULT CARD -->
+  <section class="card result-card hidden" id="resultCard">
+
+    <div class="result-top" id="resultTop">
+      <div class="result-icon-wrap" id="resultIconWrap">
+        <span id="resultIcon"></span>
+      </div>
+      <div class="result-heading">
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-url" id="resultURL"></div>
+      </div>
+      <div class="result-source-tag" id="resultSourceTag"></div>
+    </div>
+
+    <div class="qr-decoded-box hidden" id="qrDecodedBox"></div>
+
+    <div class="result-body">
+
+      <!-- Risk meters -->
+      <div class="meter-col">
+        <div class="meter-item">
+          <div class="meter-head">
+            <span>Phishing risk</span>
+            <span id="phishPct">0%</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill fill-risk" id="phishMeter"></div>
+          </div>
+        </div>
+        <div class="meter-item">
+          <div class="meter-head">
+            <span>Legitimacy score</span>
+            <span id="legitPct">0%</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill fill-safe" id="legitMeter"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VirusTotal -->
+      <div class="vt-box hidden" id="vtBox"></div>
+
+      <!-- Findings -->
+      <div class="findings">
+        <div class="findings-head">Findings</div>
+        <ul id="signalsList"></ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SCAN HISTORY -->
+  <section class="card history-card">
+    <div class="history-head">
+      <h2>Recent scans</h2>
+      <button class="history-clear" onclick="clearHistoryView()">Clear</button>
+    </div>
+    <div id="historyEmpty" class="history-empty">No scans yet this session.</div>
+    <ul id="historyList" class="history-list"></ul>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="card how-card">
+    <h2>How a scan works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <strong>Structure check</strong>
+          <span>Domain, subdomains, characters, and length are analyzed for phishing patterns.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <strong>Model inference</strong>
+          <span>A trained classifier scores the URL against thousands of known phishing examples.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <strong>Reputation cross-check</strong>
+          <span>Trusted domains and external threat databases can override a false alarm.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+function setURL(url) {
+  document.getElementById('urlInput').value = url;
+  document.getElementById('urlInput').focus();
+}
+
+async function runScan() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { flashInput(); return; }
+
+  const btn    = document.getElementById('scanBtn');
+  const label  = document.getElementById('scanBtnLabel');
+  const loader = document.getElementById('scanBtnLoader');
+  const card   = document.getElementById('resultCard');
+
+  label.classList.add('hidden');
+  loader.classList.remove('hidden');
+  btn.disabled = true;
+  card.classList.add('hidden');
+  hideQRBanner();
+  hideSystemError();
+
+  try {
+    const res  = await fetch('/predict', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (data.error) { showSystemError(data.error); return; }
+    renderResult(data);
+    loadHistory();
+  } catch (e) {
+    showSystemError('The scan couldn\u2019t reach the server. Check your connection and try again.', { title: 'Connection problem' });
+  } finally {
+    label.classList.remove('hidden');
+    loader.classList.add('hidden');
+    btn.disabled = false;
+  }
+}
+
+async function runQRScan(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  document.getElementById('qrFileName').textContent = file.name;
+
+  const card = document.getElementById('resultCard');
+  card.classList.add('hidden');
+  hideQRBanner();
+  hideSystemError();
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const res  = await fetch('/predict-qr', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.is_upi) {
+      renderUpiResult(data);
+      loadHistory();
+      return;
+    }
+
+    if (data.error) {
+      if (data.decoded_text) {
+        showSystemError(
+          `This QR code doesn\u2019t contain a web link, so there\u2019s nothing for PhishNet to scan. It decoded to:<br><code>${data.decoded_text}</code>`,
+          { title: 'Not a URL' }
+        );
+      } else {
+        showSystemError(data.error, { title: 'Couldn\u2019t read that QR code' });
+      }
+      return;
+    }
+
+    renderResult(data);
+    showQRBanner(data.decoded_text);
+    loadHistory();
+  } catch (e) {
+    showSystemError('The QR scan couldn\u2019t reach the server. Check your connection and try again.', { title: 'Connection problem' });
+  } finally {
+    event.target.value = '';
+  }
+}
+
+function showQRBanner(decodedText) {
+  const box = document.getElementById('qrDecodedBox');
+  box.classList.remove('hidden');
+  box.innerHTML = `<strong>Decoded from QR code:</strong> ${decodedText}`;
+}
+
+function hideQRBanner() {
+  const box = document.getElementById('qrDecodedBox');
+  box.classList.add('hidden');
+  box.innerHTML = '';
+}
+
+function flashInput() {
+  const wrap = document.querySelector('.scan-input-wrap');
+  wrap.classList.add('input-flash');
+  setTimeout(() => wrap.classList.remove('input-flash'), 400);
+}
+
+function showSystemError(msg, opts = {}) {
+  const box = document.getElementById('scanError');
+  box.classList.remove('hidden');
+  box.innerHTML = `<strong>${opts.title || 'Couldn\u2019t complete that scan'}</strong><br>${msg}`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideSystemError() {
+  const box = document.getElementById('scanError');
+  box.classList.add('hidden');
+  box.innerHTML = '';
+}
+
+function renderUpiResult(data) {
+  const card     = document.getElementById('resultCard');
+  const top      = document.getElementById('resultTop');
+  const iconWrap = document.getElementById('resultIconWrap');
+  const icon     = document.getElementById('resultIcon');
+  const title    = document.getElementById('resultTitle');
+  const urlEl    = document.getElementById('resultURL');
+  const srcTag   = document.getElementById('resultSourceTag');
+  const signals  = document.getElementById('signalsList');
+  const vtBox    = document.getElementById('vtBox');
+
+  card.classList.remove('hidden');
+
+  const toneMap = { LOW: 'tone-safe', MEDIUM: 'tone-warn', HIGH: 'tone-risk', UNKNOWN: 'tone-warn' };
+  const glyphMap = { LOW: '\u2713', MEDIUM: '?', HIGH: '!', UNKNOWN: '?' };
+  const tone = toneMap[data.risk_level] || 'tone-warn';
+
+  top.className = 'result-top ' + tone;
+  iconWrap.className = 'result-icon-wrap ' + tone;
+  icon.textContent = glyphMap[data.risk_level] || '?';
+  title.textContent = `UPI payment link \u2014 ${data.risk_level.toLowerCase()} risk`;
+
+  const payeeLine = data.payee_name
+    ? `${data.payee_name}${data.payee_vpa ? ' (' + data.payee_vpa + ')' : ''}`
+    : (data.payee_vpa || 'Unknown payee');
+  urlEl.textContent = payeeLine + (data.amount ? ` \u00b7 \u20b9${data.amount}` : '');
+
+  srcTag.textContent = 'UPI link check';
+
+  // Hide the phishing-style meters; they don't apply to UPI links
+  document.querySelector('.meter-col').classList.add('hidden');
+  vtBox.classList.add('hidden');
+  vtBox.innerHTML = '';
+
+  signals.innerHTML = '';
+  data.signals.forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    li.className = s.startsWith('No notable') ? 'finding-ok' : 'finding-flag';
+    signals.appendChild(li);
+  });
+
+  showQRBanner(data.decoded_text);
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderResult(data) {
+  document.querySelector('.meter-col').classList.remove('hidden');
+  const card     = document.getElementById('resultCard');
+  const top      = document.getElementById('resultTop');
+  const iconWrap = document.getElementById('resultIconWrap');
+  const icon     = document.getElementById('resultIcon');
+  const title    = document.getElementById('resultTitle');
+  const urlEl    = document.getElementById('resultURL');
+  const srcTag   = document.getElementById('resultSourceTag');
+  const signals  = document.getElementById('signalsList');
+  const vtBox    = document.getElementById('vtBox');
+
+  card.classList.remove('hidden');
+
+  let tone, heading, glyph;
+  if (data.label === 'PHISHING') {
+    tone = 'tone-risk'; heading = 'Phishing detected'; glyph = '!';
+  } else if (data.label === 'SUSPICIOUS') {
+    tone = 'tone-warn'; heading = 'Suspicious — review before visiting'; glyph = '?';
+  } else {
+    tone = 'tone-safe'; heading = 'Looks safe'; glyph = '✓';
+  }
+
+  top.className = 'result-top ' + tone;
+  iconWrap.className = 'result-icon-wrap ' + tone;
+  icon.textContent = glyph;
+  title.textContent = heading;
+  urlEl.textContent = data.url;
+  if (data.was_shortened && data.original_url) {
+    urlEl.innerHTML = `${data.url}<br><span class="result-url-sub">originally shortened: ${data.original_url}</span>`;
+  }
+
+  const sourceLabel = {
+    whitelist    : 'Trusted domain',
+    search_engine: 'Trusted search engine',
+    virustotal   : 'VirusTotal confirmed',
+    model        : 'Model inference'
+  }[data.source] || 'Model inference';
+  srcTag.textContent = sourceLabel;
+
+  document.getElementById('phishMeter').style.width = data.phish_prob + '%';
+  document.getElementById('legitMeter').style.width = data.legit_prob + '%';
+  document.getElementById('phishPct').textContent = data.phish_prob + '%';
+  document.getElementById('legitPct').textContent = data.legit_prob + '%';
+
+  if (data.virustotal && data.virustotal.checked) {
+    vtBox.classList.remove('hidden');
+    vtBox.innerHTML = `<strong>VirusTotal</strong> — ${data.virustotal.malicious} malicious · ${data.virustotal.harmless} harmless · ${data.virustotal.suspicious} suspicious`;
+  } else {
+    vtBox.classList.add('hidden');
+    vtBox.innerHTML = '';
+  }
+
+  signals.innerHTML = '';
+  data.signals.forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    li.className = s.startsWith('No notable') ? 'finding-ok' : 'finding-flag';
+    signals.appendChild(li);
+  });
+
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function loadHistory() {
+  try {
+    const res  = await fetch('/history');
+    const data = await res.json();
+    renderHistory(data.history || []);
+  } catch (e) {
+    // history is non-critical — fail silently
+  }
+}
+
+function renderHistory(items) {
+  const list  = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+
+  list.innerHTML = '';
+
+  if (!items.length) {
+    empty.classList.remove('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+
+  items.forEach(item => {
+    if (!item || !item.url) return; // skip any malformed entries
+
+    const li = document.createElement('li');
+    li.className = 'history-item';
+    li.style.listStyle = 'none'; // belt-and-suspenders: no stray bullets
+
+    // UPI labels start with "UPI" — use warn dot; otherwise standard mapping
+    const labelUpper = (item.label || '').toUpperCase();
+    let toneClass = 'history-dot-safe';
+    if (labelUpper.includes('PHISHING'))    toneClass = 'history-dot-risk';
+    else if (labelUpper.includes('SUSPICIOUS')) toneClass = 'history-dot-warn';
+    else if (labelUpper.includes('HIGH'))   toneClass = 'history-dot-risk';
+    else if (labelUpper.includes('MEDIUM')) toneClass = 'history-dot-warn';
+    else if (labelUpper.includes('UPI'))    toneClass = 'history-dot-warn';
+
+    const originTag = item.origin === 'qr'
+      ? '<span class="history-origin">QR</span>'
+      : '';
+
+    li.innerHTML = `
+      <span class="history-dot ${toneClass}"></span>
+      <span class="history-url">${item.url}</span>
+      ${originTag}
+      <span class="history-time">${item.timestamp || ''}</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function clearHistoryView() {
+  // Clears the visible list only (history itself is server-side per session).
+  document.getElementById('historyList').innerHTML = '';
+  document.getElementById('historyEmpty').classList.remove('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') runScan();
+  });
+  loadHistory();
+});
+</script>
+
+</body>
+</html>

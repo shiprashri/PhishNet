@@ -1,0 +1,454 @@
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg        : #f4f5f9;
+  --card-bg   : #ffffff;
+  --line      : #e7e9f0;
+  --ink       : #14171f;
+  --muted     : #6b7280;
+  --muted-2   : #9aa1b1;
+
+  --brand-600 : #4f5dff;
+  --brand-100 : #eef0ff;
+
+  --risk      : #e5484d;
+  --risk-bg   : #fdecee;
+  --safe      : #1aa873;
+  --safe-bg   : #e9f8f0;
+  --warn      : #d97706;
+  --warn-bg   : #fdf3e3;
+
+  --radius-lg : 16px;
+  --radius-md : 10px;
+  --shadow    : 0 1px 2px rgba(20,23,31,0.04), 0 8px 24px rgba(20,23,31,0.04);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Top nav ───────────────────────────────────────── */
+.topbar {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { display: flex; align-items: center; gap: 0.55rem; }
+.brand-icon { display: flex; }
+.brand-name { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; }
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--safe);
+  box-shadow: 0 0 0 3px var(--safe-bg);
+}
+
+/* ── Page layout ───────────────────────────────────── */
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2.4rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+/* ── Card base ─────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.8rem;
+}
+
+/* ── Scan card ─────────────────────────────────────── */
+.scan-card-head h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.4rem;
+}
+.scan-card-head p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 1.5rem;
+}
+
+.scan-form {
+  display: flex;
+  gap: 0.7rem;
+}
+.scan-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0 0.9rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.scan-input-wrap:focus-within {
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 3px var(--brand-100);
+}
+.input-icon { color: var(--muted-2); flex-shrink: 0; }
+.scan-input-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  padding: 0.85rem 0;
+  color: var(--ink);
+}
+.scan-input-wrap input::placeholder { color: var(--muted-2); }
+.input-flash { animation: flash 0.4s; }
+@keyframes flash { 0%,100% { border-color: var(--line); } 50% { border-color: var(--risk); } }
+
+.scan-form button {
+  background: var(--brand-600);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0 1.6rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  transition: background 0.15s, transform 0.1s;
+}
+.scan-form button:hover    { background: #3f4ce8; }
+.scan-form button:active   { transform: scale(0.98); }
+.scan-form button:disabled { background: var(--muted-2); cursor: not-allowed; }
+
+.loader {
+  width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Examples row ──────────────────────────────────── */
+.examples-row {
+  margin-top: 1.1rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.examples-label { font-size: 0.78rem; color: var(--muted-2); margin-right: 0.2rem; }
+.example-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.example-chip:hover { border-color: var(--brand-600); background: var(--brand-100); }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-safe { background: var(--safe); }
+.dot-risk { background: var(--risk); }
+
+/* ── Result card ───────────────────────────────────── */
+.result-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.4rem;
+}
+.result-icon-wrap {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.tone-risk .result-icon-wrap, .result-icon-wrap.tone-risk { background: var(--risk-bg); color: var(--risk); }
+.tone-warn .result-icon-wrap, .result-icon-wrap.tone-warn { background: var(--warn-bg); color: var(--warn); }
+.tone-safe .result-icon-wrap, .result-icon-wrap.tone-safe { background: var(--safe-bg); color: var(--safe); }
+
+.result-heading { flex: 1; min-width: 0; }
+.result-title { font-weight: 700; font-size: 1.02rem; }
+.tone-risk .result-title { color: var(--risk); }
+.tone-warn .result-title { color: var(--warn); }
+.tone-safe .result-title { color: var(--safe); }
+.result-url {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  color: var(--muted);
+  word-break: break-all;
+  margin-top: 0.2rem;
+}
+.result-url-sub {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: var(--muted-2);
+  font-size: 0.7rem;
+}
+.result-source-tag {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  white-space: nowrap;
+}
+
+/* ── Meters ────────────────────────────────────────── */
+.meter-col { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.3rem; }
+.meter-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.meter-track {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.meter-fill { height: 100%; width: 0%; border-radius: 5px; transition: width 0.6s ease; }
+.fill-risk { background: var(--risk); }
+.fill-safe { background: var(--safe); }
+
+/* ── VirusTotal box ────────────────────────────────── */
+.vt-box {
+  font-size: 0.82rem;
+  background: var(--brand-100);
+  color: #2f3bd6;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.3rem;
+}
+
+/* ── Findings ──────────────────────────────────────── */
+.findings-head {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 0.7rem;
+}
+.findings ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.findings li {
+  font-size: 0.86rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+.finding-flag { background: var(--warn-bg); color: #92560a; }
+.finding-flag::before { content: '●'; color: var(--warn); flex-shrink: 0; font-size: 0.6rem; margin-top: 0.35rem; }
+.finding-ok   { background: var(--safe-bg); color: #0e7a52; }
+.finding-ok::before { content: '●'; color: var(--safe); flex-shrink: 0; font-size: 0.6rem; margin-top: 0.35rem; }
+
+/* ── Scan error banner ─────────────────────────────── */
+.scan-error {
+  margin-top: 1rem;
+  background: var(--warn-bg);
+  color: #92560a;
+  border: 1px solid #f3d9a8;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.scan-error code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  background: rgba(0,0,0,0.06);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  word-break: break-all;
+}
+
+/* ── QR upload row ─────────────────────────────────── */
+.qr-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+}
+.qr-divider {
+  display: flex;
+  align-items: center;
+  font-size: 0.74rem;
+  color: var(--muted-2);
+}
+.qr-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg);
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--brand-600);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.qr-upload-btn:hover { border-color: var(--brand-600); background: var(--brand-100); }
+.qr-filename {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── QR decoded banner inside result ───────────────── */
+.qr-decoded-box {
+  font-size: 0.82rem;
+  background: var(--brand-100);
+  color: #2f3bd6;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.3rem;
+  word-break: break-all;
+}
+
+/* ── Scan history ──────────────────────────────────── */
+.history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.history-head h2 { font-size: 1.05rem; font-weight: 800; }
+.history-clear {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+}
+.history-clear:hover { color: var(--risk); }
+.history-empty {
+  font-size: 0.86rem;
+  color: var(--muted-2);
+  padding: 0.5rem 0;
+}
+.history-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  font-size: 0.8rem;
+}
+.history-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.history-dot-risk { background: var(--risk); }
+.history-dot-warn { background: var(--warn); }
+.history-dot-safe { background: var(--safe); }
+.history-url {
+  flex: 1;
+  min-width: 0;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-origin {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--brand-600);
+  background: var(--brand-100);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  flex-shrink: 0;
+}
+.history-time {
+  font-size: 0.72rem;
+  color: var(--muted-2);
+  flex-shrink: 0;
+}
+
+/* ── How it works ──────────────────────────────────── */
+.how-card h2 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 1.3rem;
+}
+.steps { display: flex; flex-direction: column; gap: 1.1rem; }
+.step { display: flex; gap: 0.9rem; align-items: flex-start; }
+.step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--brand-100);
+  color: var(--brand-600);
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-text { display: flex; flex-direction: column; gap: 0.15rem; }
+.step-text strong { font-size: 0.9rem; font-weight: 700; }
+.step-text span { font-size: 0.84rem; color: var(--muted); line-height: 1.45; }
+
+/* ── Utilities ─────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 600px) {
+  .scan-form { flex-direction: column; }
+  .scan-form button { width: 100%; padding: 0.85rem; }
+  .result-top { flex-wrap: wrap; }
+  .result-source-tag { order: 3; }
+}
